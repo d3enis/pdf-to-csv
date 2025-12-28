@@ -9,7 +9,7 @@ function decodeRun(raw: string): string {
   } catch {
     a = raw;
   }
-  // ne forsiramo uvijek latin1->utf8; uzmi “bolji”
+
   let b = a;
   try {
     b = Buffer.from(a, "latin1").toString("utf8");
@@ -82,7 +82,15 @@ export async function POST(req: Request) {
     const formData = await req.formData();
     const file = formData.get("file");
     const fileFormat = (formData.get("fileFormat") as string) || "csv";
+    const MAX_SIZE_MB = 5;
+    const MAX_SIZE_BYTES = MAX_SIZE_MB * 1024 * 1024;
 
+    if (file.size > MAX_SIZE_BYTES) {
+      return new Response(
+        `File too large. Max allowed size is ${MAX_SIZE_MB} MB.`,
+        { status: 413 }
+      );
+    }
     if (!file || !(file instanceof File)) {
       return new Response("No file uploaded", { status: 400 });
     }
